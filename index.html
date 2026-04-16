@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Multi-Account Setup Guide</title>
+<meta name="description" content="Complete guide to managing multiple GitHub accounts on one machine using SSH key pairs and host aliases.">
+<style>
+:root {
+  --bg:        #0d1117;
+  --bg-sub:    #161b22;
+  --bg-over:   #1c2128;
+  --bd:        #30363d;
+  --bd-muted:  #21262d;
+  --tx:        #e6edf3;
+  --tx-2:      #8b949e;
+  --tx-3:      #6e7681;
+  --blue:      #58a6ff;
+  --blue-em:   #1f6feb;
+  --green:     #3fb950;
+  --green-sub: #1a2b1a;
+  --red:       #f85149;
+  --red-sub:   #2d1117;
+  --yellow:    #d29922;
+  --yellow-sub:#272115;
+  --mono: ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --r:4px; --rm:6px; --rl:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6}
+
+.nav{background:var(--bg-sub);border-bottom:1px solid var(--bd);padding:0 24px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;height:52px}
+.nav-logo{display:flex;align-items:center;gap:8px;padding:0 12px 0 0;border-right:1px solid var(--bd);margin-right:16px}
+.nav-logo svg{fill:var(--tx);width:24px;height:24px}
+.nav-crumb{font-size:14px;color:var(--tx-2)}
+.nav-crumb strong{color:var(--tx)}
+.nav-crumb span{padding:0 6px;color:var(--tx-3)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.nav-badge{background:var(--blue-em);color:#fff;font-size:11px;font-weight:600;padding:2px 10px;border-radius:20px}
+.nav-star{background:transparent;border:1px solid var(--bd);color:var(--tx-2);font-size:12px;padding:4px 12px;border-radius:var(--rm);cursor:pointer;font-family:var(--sans);display:flex;align-items:center;gap:5px;transition:background .15s,color .15s}
+.nav-star:hover{background:var(--bg-over);color:var(--tx)}
+
+.layout{display:flex;max-width:1080px;margin:0 auto;padding:24px 20px;gap:24px}
+.sidebar{width:210px;flex-shrink:0;position:sticky;top:60px;height:fit-content}
+.main{flex:1;min-width:0}
+
+.sb-title{font-size:11px;font-weight:600;color:var(--tx-3);text-transform:uppercase;letter-spacing:.05em;padding:0 8px;margin-bottom:6px}
+.sb-link{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:var(--rm);font-size:13px;color:var(--tx-2);cursor:pointer;background:transparent;border:none;width:100%;text-align:left;transition:background .1s,color .1s;margin-bottom:1px;font-family:var(--sans)}
+.sb-link:hover{background:var(--bg-sub);color:var(--tx)}
+.sb-link.active{background:var(--bg-over);color:var(--blue);font-weight:500}
+.sb-num{width:18px;height:18px;border-radius:50%;background:var(--bd);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--tx-2);flex-shrink:0}
+.sb-link.active .sb-num{background:var(--blue-em);color:#fff}
+
+.toggle-bar{background:var(--bg-sub);border:1px solid var(--bd);border-radius:var(--rl);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.toggle-acc{display:flex;align-items:center;gap:10px}
+.t-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--bd);flex-shrink:0}
+.t-name{font-size:14px;font-weight:600}
+.t-email{font-size:12px;color:var(--tx-2)}
+.toggle-pill{display:flex;background:var(--bg-over);border:1px solid var(--bd);border-radius:20px;padding:3px;gap:2px}
+.t-btn{padding:5px 14px;border-radius:20px;border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:500;color:var(--tx-2);display:flex;align-items:center;gap:6px;transition:background .2s,color .2s;font-family:var(--sans)}
+.t-btn:hover{color:var(--tx)}
+.t-btn.act-p{background:#1f6feb;color:#fff}
+.t-btn.act-o{background:#1a4a2e;color:#3fb950}
+.t-dot{width:7px;height:7px;border-radius:50%}
+.dot-p{background:#58a6ff}
+.dot-o{background:#3fb950}
+
+.tabs{display:flex;border-bottom:1px solid var(--bd);margin-bottom:22px;overflow-x:auto}
+.tab{padding:8px 14px;font-size:13px;color:var(--tx-2);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;display:flex;align-items:center;gap:5px;transition:color .15s;font-family:var(--sans)}
+.tab:hover{color:var(--tx)}
+.tab.active{color:var(--tx);font-weight:500;border-bottom-color:#f78166}
+.tab-ct{background:var(--bg-over);border:1px solid var(--bd);border-radius:20px;font-size:10px;padding:0 5px;color:var(--tx-2)}
+
+.section{margin-bottom:30px;scroll-margin-top:68px}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--bd-muted)}
+.step-badge{width:26px;height:26px;border-radius:50%;background:var(--blue-em);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.step-badge.red{background:#b91c1c}
+.step-badge.purple{background:#6e40c9}
+.sec-head h2{font-size:16px;font-weight:600}
+.sec-desc{font-size:13px;color:var(--tx-2);margin-bottom:14px;line-height:1.7}
+hr.div{border:none;border-top:1px solid var(--bd-muted);margin:26px 0}
+
+.code-head{background:var(--bg-over);border:1px solid var(--bd);border-bottom:none;border-radius:var(--rl) var(--rl) 0 0;padding:7px 14px;display:flex;align-items:center;justify-content:space-between}
+.code-fn{font-family:var(--mono);font-size:12px;color:var(--tx-2)}
+.code-fn em{font-style:normal;color:var(--blue)}
+.code-body{background:var(--bg-sub);border:1px solid var(--bd);border-radius:0 0 var(--rl) var(--rl);padding:14px 16px;overflow-x:auto;margin-bottom:10px}
+.code-body pre{font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--tx);white-space:pre}
+.cs{background:var(--bg-sub);border:1px solid var(--bd);border-radius:var(--rl);padding:12px 16px;margin-bottom:10px;position:relative}
+.cs pre{font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--tx);white-space:pre;padding-right:68px;overflow-x:auto}
+.cs .cp-btn{position:absolute;top:8px;right:10px}
+
+.cp-btn{background:transparent;border:1px solid var(--bd);border-radius:var(--r);color:var(--tx-2);font-size:11px;padding:3px 10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:var(--sans);transition:background .15s,color .15s,border-color .15s}
+.cp-btn:hover{background:var(--bg-over);color:var(--tx);border-color:var(--tx-2)}
+.cp-btn.done{color:var(--green);border-color:var(--green)}
+
+code{font-family:var(--mono);font-size:12px;background:var(--bg-over);border:1px solid var(--bd-muted);border-radius:3px;padding:1px 5px;color:#f0883e}
+
+.call{border-radius:var(--rm);padding:11px 14px;margin-bottom:12px;display:flex;gap:10px;font-size:13px;line-height:1.6;border-left:3px solid}
+.call-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+.ci{background:#122236;border-color:var(--blue);color:#79c0ff}
+.ct{background:var(--green-sub);border-color:var(--green);color:#56d364}
+.cw{background:var(--yellow-sub);border-color:var(--yellow);color:#e3b341}
+.cd{background:var(--red-sub);border-color:var(--red);color:#ff7b72}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+.tbl th{background:var(--bg-over);text-align:left;padding:7px 12px;font-size:11px;font-weight:600;color:var(--tx-2);border:1px solid var(--bd)}
+.tbl td{padding:8px 12px;border:1px solid var(--bd-muted);vertical-align:top}
+.tbl tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.tbl td:first-child{white-space:nowrap}
+
+.tag{display:inline-block;font-size:11px;font-weight:500;padding:1px 7px;border-radius:20px;margin-right:4px}
+.tp{background:#122236;color:#58a6ff;border:1px solid #1f6feb}
+.to{background:#122112;color:#3fb950;border:1px solid #1a4a2e}
+
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:12px 0;row-gap:8px}
+.fn{background:var(--bg-over);border:1px solid var(--bd);border-radius:var(--rm);padding:7px 12px;font-size:12px;font-weight:500}
+.fn.blue{background:#122236;border-color:var(--blue-em);color:var(--blue)}
+.fn.green{background:var(--green-sub);border-color:#1a4a2e;color:var(--green)}
+.fa{font-size:16px;color:var(--tx-3);padding:0 5px}
+
+.p-show{display:block}
+.o-show{display:none}
+body.show-o .p-show{display:none}
+body.show-o .o-show{display:block}
+
+.steps{list-style:none}
+.si{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--bd-muted)}
+.si:last-child{border-bottom:none}
+.sn{width:22px;height:22px;border-radius:50%;background:var(--bg-over);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--tx-2);flex-shrink:0;margin-top:2px}
+.st{font-weight:600;font-size:14px;margin-bottom:3px}
+.sd{font-size:13px;color:var(--tx-2)}
+
+.fp{display:inline-flex;align-items:center;gap:5px;background:var(--bg-over);border:1px solid var(--bd);border-radius:20px;padding:2px 10px;font-family:var(--mono);font-size:12px;color:#ffa657;margin-bottom:10px}
+.clabel{font-size:12px;font-weight:600;color:var(--tx-2);margin-bottom:5px;margin-top:10px;display:flex;align-items:center;gap:6px}
+.clabel:first-child{margin-top:0}
+
+.placeholder{color:#ffa657;font-style:italic}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+@media(max-width:640px){
+  .layout{flex-direction:column}
+  .sidebar{display:none}
+  .toggle-bar{flex-direction:column;align-items:flex-start}
+  .nav-star{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">
+    <svg viewBox="0 0 24 24"><path d="M12 1C5.926 1 1 5.925 1 12c0 4.868 3.163 9.003 7.547 10.468.552.101.756-.239.756-.531 0-.262-.01-1.133-.015-2.063-3.07.666-3.72-1.479-3.72-1.479-.502-1.274-1.225-1.614-1.225-1.614-1.001-.684.076-.67.076-.67 1.108.078 1.69 1.136 1.69 1.136.984 1.685 2.582 1.198 3.213.916.1-.712.385-1.198.7-1.474-2.451-.279-5.03-1.225-5.03-5.453 0-1.205.43-2.19 1.135-2.962-.114-.279-.492-1.401.107-2.92 0 0 .926-.296 3.034 1.13A10.56 10.56 0 0112 6.84c.937.004 1.881.127 2.763.371 2.106-1.426 3.03-1.13 3.03-1.13.601 1.519.223 2.641.109 2.92.707.772 1.133 1.757 1.133 2.962 0 4.238-2.583 5.172-5.042 5.444.396.341.749 1.013.749 2.042 0 1.474-.014 2.664-.014 3.026 0 .295.2.638.762.53C19.842 21 23 16.865 23 12c0-6.075-4.926-11-11-11z"/></svg>
+  </div>
+  <span class="nav-crumb"><strong>git-multi-account-setup</strong></span>
+  <div class="nav-right">
+    <button class="nav-star">⭐ Star this guide</button>
+    <span class="nav-badge">📘 Public Guide</span>
+  </div>
+</nav>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sb-title" style="margin-bottom:10px">On this page</div>
+    <button class="sb-link active" onclick="goTo('s0',this)"><div class="sb-num">i</div>Overview</button>
+    <button class="sb-link" onclick="goTo('s1',this)"><div class="sb-num">1</div>Generate SSH Keys</button>
+    <button class="sb-link" onclick="goTo('s2',this)"><div class="sb-num">2</div>Add to GitHub</button>
+    <button class="sb-link" onclick="goTo('s3',this)"><div class="sb-num">3</div>SSH Config File</button>
+    <button class="sb-link" onclick="goTo('s4',this)"><div class="sb-num">4</div>Test Connection</button>
+    <button class="sb-link" onclick="goTo('s5',this)"><div class="sb-num">5</div>Clone a Repo</button>
+    <button class="sb-link" onclick="goTo('s6',this)"><div class="sb-num">6</div>New Local Project</button>
+    <button class="sb-link" onclick="goTo('s7',this)"><div class="sb-num">7</div>Push a Branch</button>
+    <button class="sb-link" onclick="goTo('s8',this)"><div class="sb-num">8</div>Daily Workflow</button>
+    <button class="sb-link" onclick="goTo('s9',this)"><div class="sb-num">!</div>Common Mistakes</button>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--bd-muted)">
+      <div class="sb-title" style="margin-bottom:8px">Quick Ref</div>
+      <div style="font-size:12px;color:var(--tx-2);padding:0 6px;line-height:2.2">
+        Personal: <code>github-personal</code><br>
+        Work: <code>github-work</code>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- TOGGLE -->
+    <div class="toggle-bar">
+      <div class="toggle-acc">
+        <div class="t-avatar" id="t-av" style="background:#122236;color:#58a6ff">YO</div>
+        <div>
+          <div class="t-name" id="t-name">your-personal-username</div>
+          <div class="t-email" id="t-email">personal@email.com</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div style="font-size:12px;color:var(--tx-2)">Toggle account — commands update automatically</div>
+        <div class="toggle-pill">
+          <button class="t-btn act-p" id="btn-p" onclick="setAcc('personal')"><span class="t-dot dot-p"></span>Personal</button>
+          <button class="t-btn" id="btn-w" onclick="setAcc('work')"><span class="t-dot dot-o"></span>Work</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(this,'tg')">📖 Full Guide <span class="tab-ct">9 steps</span></button>
+      <button class="tab" onclick="switchTab(this,'tc')">⚡ Cheat Sheet</button>
+      <button class="tab" onclick="switchTab(this,'tt')">🔧 Troubleshoot</button>
+    </div>
+
+    <!-- ══ GUIDE ══ -->
+    <div id="tg">
+
+      <!-- S0 -->
+      <div class="section" id="s0">
+        <div class="sec-head"><div class="step-badge purple">i</div><h2>How multi-account SSH works</h2></div>
+        <p class="sec-desc">GitHub identifies you by your SSH key, not by username and password. With two accounts on one machine you need two separate keys and an SSH config that maps a named alias to each key. You stop using <code>github.com</code> directly — every URL uses an alias instead.</p>
+        <div class="flow">
+          <div class="fn">git push / clone</div><div class="fa">→</div>
+          <div class="fn blue">SSH alias<br><small>github-personal</small></div><div class="fa">→</div>
+          <div class="fn">~/.ssh/config</div><div class="fa">→</div>
+          <div class="fn green">correct key sent<br><small>id_ed25519_personal</small></div>
+        </div>
+        <table class="tbl" style="margin-top:14px">
+          <thead><tr><th>Account</th><th>Username</th><th>Email</th><th>SSH Alias</th><th>Key File</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="tag tp">Personal</span></td>
+              <td><code class="placeholder">your-personal-username</code></td>
+              <td><span class="placeholder">personal@email.com</span></td>
+              <td><code>github-personal</code></td>
+              <td><code>id_ed25519_personal</code></td>
+            </tr>
+            <tr>
+              <td><span class="tag to">Work</span></td>
+              <td><code class="placeholder">your-work-username</code></td>
+              <td><span class="placeholder">you@company.com</span></td>
+              <td><code>github-work</code></td>
+              <td><code>id_ed25519_work</code></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="call ci"><span class="call-icon">💡</span><span>Replace every <code class="placeholder" style="color:#ffa657">highlighted placeholder</code> with your own values throughout this guide.</span></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S1 -->
+      <div class="section" id="s1">
+        <div class="sec-head"><div class="step-badge">1</div><h2>Generate SSH key pairs</h2></div>
+        <p class="sec-desc">Run these commands in your terminal. Each account needs its own key file with a unique name. The <code>-C</code> flag adds your email as a label so you can identify keys later.</p>
+        <div class="call ci"><span class="call-icon">💡</span><span>Already have keys? Check with <code>ls ~/.ssh/</code> — if both files exist, skip to Step 2.</span></div>
+
+        <div class="p-show">
+          <div class="clabel">Generate personal key <span class="tag tp">personal</span></div>
+          <div class="cs"><pre><span style="color:var(--tx-3)"># Replace the email with your personal GitHub email</span>
+ssh-keygen <span style="color:#79c0ff">-t</span> ed25519 <span style="color:#79c0ff">-C</span> <span style="color:#a5d6ff">"<span class="placeholder">personal@email.com</span>"</span> <span style="color:#79c0ff">-f</span> <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+
+<span style="color:var(--tx-3)"># Press Enter twice to skip passphrase (or set one for security)</span></pre><button class="cp-btn cp-btn" onclick="cp(this,'ssh-keygen -t ed25519 -C \"personal@email.com\" -f ~/.ssh/id_ed25519_personal')">copy</button></div>
+        </div>
+        <div class="o-show">
+          <div class="clabel">Generate work key <span class="tag to">work</span></div>
+          <div class="cs"><pre><span style="color:var(--tx-3)"># Replace the email with your work GitHub email</span>
+ssh-keygen <span style="color:#79c0ff">-t</span> ed25519 <span style="color:#79c0ff">-C</span> <span style="color:#a5d6ff">"<span class="placeholder">you@company.com</span>"</span> <span style="color:#79c0ff">-f</span> <span style="color:#ffa657">~/.ssh/id_ed25519_work</span>
+
+<span style="color:var(--tx-3)"># Press Enter twice to skip passphrase (or set one for security)</span></pre><button class="cp-btn" onclick="cp(this,'ssh-keygen -t ed25519 -C \"you@company.com\" -f ~/.ssh/id_ed25519_work')">copy</button></div>
+        </div>
+
+        <div class="clabel" style="margin-top:14px">Add both keys to SSH agent</div>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Start the agent</span>
+eval "$(ssh-agent -s)"
+
+<span style="color:var(--tx-3)"># Add both keys</span>
+ssh-add <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+ssh-add <span style="color:#ffa657">~/.ssh/id_ed25519_work</span>
+
+<span style="color:var(--tx-3)"># Confirm both are loaded</span>
+ssh-add -l</pre><button class="cp-btn" onclick="cp(this,'eval \"$(ssh-agent -s)\"\nssh-add ~/.ssh/id_ed25519_personal\nssh-add ~/.ssh/id_ed25519_work\nssh-add -l')">copy</button></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S2 -->
+      <div class="section" id="s2">
+        <div class="sec-head"><div class="step-badge">2</div><h2>Add public keys to GitHub</h2></div>
+        <p class="sec-desc">Copy each public key and paste it into the matching GitHub account. Log into the correct account before adding each key.</p>
+
+        <div class="p-show">
+          <div class="clabel">Copy personal public key <span class="tag tp">personal</span></div>
+          <div class="cs"><pre><span style="color:var(--tx-3)"># macOS — copies straight to clipboard</span>
+pbcopy &lt; <span style="color:#ffa657">~/.ssh/id_ed25519_personal.pub</span>
+
+<span style="color:var(--tx-3)"># Linux — print then manually copy the output</span>
+cat <span style="color:#ffa657">~/.ssh/id_ed25519_personal.pub</span></pre><button class="cp-btn" onclick="cp(this,'pbcopy < ~/.ssh/id_ed25519_personal.pub')">copy</button></div>
+        </div>
+        <div class="o-show">
+          <div class="clabel">Copy work public key <span class="tag to">work</span></div>
+          <div class="cs"><pre><span style="color:var(--tx-3)"># macOS — copies straight to clipboard</span>
+pbcopy &lt; <span style="color:#ffa657">~/.ssh/id_ed25519_work.pub</span>
+
+<span style="color:var(--tx-3)"># Linux — print then manually copy the output</span>
+cat <span style="color:#ffa657">~/.ssh/id_ed25519_work.pub</span></pre><button class="cp-btn" onclick="cp(this,'pbcopy < ~/.ssh/id_ed25519_work.pub')">copy</button></div>
+        </div>
+
+        <div class="call ci" style="margin-top:12px"><span class="call-icon">🔗</span><span>Go to <strong>GitHub → Settings → SSH and GPG keys → New SSH key</strong>. Paste the key. Use a clear title like <code>MacBook-Personal</code> or <code>MacBook-Work</code> so you can identify it later.</span></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S3 -->
+      <div class="section" id="s3">
+        <div class="sec-head"><div class="step-badge">3</div><h2>Create the SSH config file</h2></div>
+        <p class="sec-desc">This is the most important step. The config maps each alias to the right private key so SSH automatically uses the correct identity — no manual switching needed.</p>
+        <div class="fp">📄 ~/.ssh/config</div>
+        <div class="code-head">
+          <span class="code-fn">~/.ssh/<em>config</em></span>
+          <button class="cp-btn" onclick="cp(this,'Host github-personal\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519_personal\n  IdentitiesOnly yes\n\nHost github-work\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519_work\n  IdentitiesOnly yes')">copy all</button>
+        </div>
+        <div class="code-body"><pre><span style="color:var(--tx-3)"># ── Personal GitHub ────────────────────────────────────</span>
+<span style="color:#3fb950">Host</span> <span style="color:#a5d6ff">github-personal</span>
+  <span style="color:#79c0ff">HostName</span>       github.com
+  <span style="color:#79c0ff">User</span>           git
+  <span style="color:#79c0ff">IdentityFile</span>   <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+  <span style="color:#79c0ff">IdentitiesOnly</span> yes    <span style="color:var(--tx-3)"># forces only this key — do not remove</span>
+
+<span style="color:var(--tx-3)"># ── Work GitHub ────────────────────────────────────────</span>
+<span style="color:#3fb950">Host</span> <span style="color:#a5d6ff">github-work</span>
+  <span style="color:#79c0ff">HostName</span>       github.com
+  <span style="color:#79c0ff">User</span>           git
+  <span style="color:#79c0ff">IdentityFile</span>   <span style="color:#ffa657">~/.ssh/id_ed25519_work</span>
+  <span style="color:#79c0ff">IdentitiesOnly</span> yes    <span style="color:var(--tx-3)"># forces only this key — do not remove</span></pre></div>
+
+        <div class="call ct"><span class="call-icon">✅</span><span><strong>IdentitiesOnly yes</strong> is essential — without it SSH may try other loaded keys and silently authenticate as the wrong account.</span></div>
+
+        <div class="clabel" style="margin-top:10px">Create and open the file</div>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Create the file if it doesn't exist</span>
+touch ~/.ssh/config
+
+<span style="color:var(--tx-3)"># Set required permissions (SSH will refuse to work otherwise)</span>
+chmod 600 ~/.ssh/config
+
+<span style="color:var(--tx-3)"># Open with nano or VS Code</span>
+nano ~/.ssh/config
+code ~/.ssh/config</pre><button class="cp-btn" onclick="cp(this,'touch ~/.ssh/config\nchmod 600 ~/.ssh/config\nnano ~/.ssh/config')">copy</button></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S4 -->
+      <div class="section" id="s4">
+        <div class="sec-head"><div class="step-badge">4</div><h2>Test both SSH connections</h2></div>
+        <p class="sec-desc">Always do this before cloning or pushing. If either test fails, fix it here before moving on.</p>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Test personal account</span>
+ssh <span style="color:#79c0ff">-T</span> git@<span style="color:#a5d6ff">github-personal</span>
+<span style="color:#3fb950">▶ Hi your-personal-username! You've successfully authenticated...</span>
+
+<span style="color:var(--tx-3)"># Test work account</span>
+ssh <span style="color:#79c0ff">-T</span> git@<span style="color:#a5d6ff">github-work</span>
+<span style="color:#3fb950">▶ Hi your-work-username! You've successfully authenticated...</span></pre><button class="cp-btn" onclick="cp(this,'ssh -T git@github-personal\nssh -T git@github-work')">copy</button></div>
+        <div class="call cw"><span class="call-icon">⚠️</span><span>Got <code>Permission denied (publickey)</code>? The public key was not added to that GitHub account. Re-check Step 2. Run <code>ssh -vT git@github-personal</code> for detailed debug output.</span></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S5 -->
+      <div class="section" id="s5">
+        <div class="sec-head"><div class="step-badge">5</div><h2>Clone a repository</h2></div>
+        <p class="sec-desc">Never use the default <code>git@github.com:...</code> URL. Always replace <code>github.com</code> with your alias. Then set your local identity immediately.</p>
+
+        <div class="p-show">
+          <div class="clabel">Clone a personal repo <span class="tag tp">personal</span></div>
+          <div class="cs"><pre>git clone git@<span style="color:#a5d6ff">github-personal</span>:<span class="placeholder">your-personal-username</span>/<span style="color:#ffa657">repo-name</span>.git
+cd repo-name
+
+<span style="color:var(--tx-3)"># Set identity immediately after cloning</span>
+git config user.name  <span style="color:#a5d6ff">"<span class="placeholder">Your Name</span>"</span>
+git config user.email <span style="color:#a5d6ff">"<span class="placeholder">personal@email.com</span>"</span></pre><button class="cp-btn" onclick="cp(this,'git clone git@github-personal:your-personal-username/repo-name.git\ncd repo-name\ngit config user.name \"Your Name\"\ngit config user.email \"personal@email.com\"')">copy</button></div>
+        </div>
+        <div class="o-show">
+          <div class="clabel">Clone a work repo <span class="tag to">work</span></div>
+          <div class="cs"><pre>git clone git@<span style="color:#a5d6ff">github-work</span>:<span class="placeholder">your-work-username</span>/<span style="color:#ffa657">repo-name</span>.git
+cd repo-name
+
+<span style="color:var(--tx-3)"># Set identity immediately after cloning</span>
+git config user.name  <span style="color:#a5d6ff">"<span class="placeholder">Your Name</span>"</span>
+git config user.email <span style="color:#a5d6ff">"<span class="placeholder">you@company.com</span>"</span></pre><button class="cp-btn" onclick="cp(this,'git clone git@github-work:your-work-username/repo-name.git\ncd repo-name\ngit config user.name \"Your Name\"\ngit config user.email \"you@company.com\"')">copy</button></div>
+        </div>
+        <div class="call ct" style="margin-top:4px"><span class="call-icon">💡</span><span><strong>Pattern to remember:</strong> Take any GitHub clone URL → replace <code>github.com</code> with <code>github-personal</code> or <code>github-work</code>. That's the only change needed.</span></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S6 -->
+      <div class="section" id="s6">
+        <div class="sec-head"><div class="step-badge">6</div><h2>Push a new local project to GitHub</h2></div>
+        <p class="sec-desc">First create an <strong>empty</strong> repository on GitHub.com (no README, no .gitignore). Then follow all 7 steps below.</p>
+
+        <div class="p-show">
+          <div class="code-head"><span class="code-fn">terminal — <em>new project</em> <span class="tag tp" style="font-size:10px">personal</span></span><button class="cp-btn" onclick="cp(this,'cd your-project\ngit init\ngit config user.name \"Your Name\"\ngit config user.email \"personal@email.com\"\ngit add .\ngit commit -m \"Initial commit\"\ngit remote add origin git@github-personal:your-personal-username/repo-name.git\ngit branch -M main\ngit push -u origin main')">copy all</button></div>
+          <div class="code-body"><pre><span style="color:var(--tx-3)"># 1 — Navigate to your project folder</span>
+cd <span style="color:#ffa657">your-project</span>
+
+<span style="color:var(--tx-3)"># 2 — Initialise Git</span>
+git init
+
+<span style="color:var(--tx-3)"># 3 — Set local identity BEFORE the first commit</span>
+git config user.name  <span style="color:#a5d6ff">"<span class="placeholder">Your Name</span>"</span>
+git config user.email <span style="color:#a5d6ff">"<span class="placeholder">personal@email.com</span>"</span>
+
+<span style="color:var(--tx-3)"># 4 — Stage all files</span>
+git add .
+
+<span style="color:var(--tx-3)"># 5 — First commit</span>
+git commit <span style="color:#79c0ff">-m</span> <span style="color:#a5d6ff">"Initial commit"</span>
+
+<span style="color:var(--tx-3)"># 6 — Add remote using the SSH alias (NOT github.com)</span>
+git remote add origin git@<span style="color:#a5d6ff">github-personal</span>:<span class="placeholder">your-personal-username</span>/<span style="color:#ffa657">repo-name</span>.git
+
+<span style="color:var(--tx-3)"># 7 — Push</span>
+git branch <span style="color:#79c0ff">-M</span> main
+git push <span style="color:#79c0ff">-u</span> origin main</pre></div>
+        </div>
+
+        <div class="o-show">
+          <div class="code-head"><span class="code-fn">terminal — <em>new project</em> <span class="tag to" style="font-size:10px">work</span></span><button class="cp-btn" onclick="cp(this,'cd your-project\ngit init\ngit config user.name \"Your Name\"\ngit config user.email \"you@company.com\"\ngit add .\ngit commit -m \"Initial commit\"\ngit remote add origin git@github-work:your-work-username/repo-name.git\ngit branch -M main\ngit push -u origin main')">copy all</button></div>
+          <div class="code-body"><pre><span style="color:var(--tx-3)"># 1 — Navigate to your project folder</span>
+cd <span style="color:#ffa657">your-project</span>
+
+<span style="color:var(--tx-3)"># 2 — Initialise Git</span>
+git init
+
+<span style="color:var(--tx-3)"># 3 — Set local identity BEFORE the first commit</span>
+git config user.name  <span style="color:#a5d6ff">"<span class="placeholder">Your Name</span>"</span>
+git config user.email <span style="color:#a5d6ff">"<span class="placeholder">you@company.com</span>"</span>
+
+<span style="color:var(--tx-3)"># 4 — Stage all files</span>
+git add .
+
+<span style="color:var(--tx-3)"># 5 — First commit</span>
+git commit <span style="color:#79c0ff">-m</span> <span style="color:#a5d6ff">"Initial commit"</span>
+
+<span style="color:var(--tx-3)"># 6 — Add remote using the SSH alias (NOT github.com)</span>
+git remote add origin git@<span style="color:#a5d6ff">github-work</span>:<span class="placeholder">your-work-username</span>/<span style="color:#ffa657">repo-name</span>.git
+
+<span style="color:var(--tx-3)"># 7 — Push</span>
+git branch <span style="color:#79c0ff">-M</span> main
+git push <span style="color:#79c0ff">-u</span> origin main</pre></div>
+        </div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S7 -->
+      <div class="section" id="s7">
+        <div class="sec-head"><div class="step-badge">7</div><h2>Create and push a feature branch</h2></div>
+        <p class="sec-desc">The professional workflow — never commit directly to <code>main</code>. Create one branch per feature or bug fix, push it, then open a pull request.</p>
+        <div class="code-head"><span class="code-fn">terminal — <em>feature branch workflow</em></span><button class="cp-btn" onclick="cp(this,'git checkout main\ngit pull origin main\ngit checkout -b feature/your-feature-name\n\n# make your changes...\n\ngit status\ngit add .\ngit commit -m \"feat: describe what you built\"\ngit push -u origin feature/your-feature-name\n\n# After PR is merged:\ngit checkout main\ngit pull origin main\ngit branch -d feature/your-feature-name')">copy all</button></div>
+        <div class="code-body"><pre><span style="color:var(--tx-3)"># 1 — Start from an up-to-date main</span>
+git checkout main
+git pull origin main
+
+<span style="color:var(--tx-3)"># 2 — Create and switch to a feature branch</span>
+git checkout <span style="color:#79c0ff">-b</span> <span style="color:#a5d6ff">feature/your-feature-name</span>
+
+<span style="color:var(--tx-3)"># 3 — Write code, then review what changed</span>
+git status          <span style="color:var(--tx-3)"># which files changed</span>
+git diff            <span style="color:var(--tx-3)"># line-by-line diff</span>
+
+<span style="color:var(--tx-3)"># 4 — Stage changes</span>
+git add .                            <span style="color:var(--tx-3)"># all files</span>
+git add <span style="color:#ffa657">src/components/Button.jsx</span>  <span style="color:var(--tx-3)"># or a specific file</span>
+
+<span style="color:var(--tx-3)"># 5 — Commit with a clear message</span>
+git commit <span style="color:#79c0ff">-m</span> <span style="color:#a5d6ff">"feat: add login button component"</span>
+
+<span style="color:var(--tx-3)"># 6 — Push branch and open a Pull Request</span>
+git push <span style="color:#79c0ff">-u</span> origin <span style="color:#a5d6ff">feature/your-feature-name</span>
+<span style="color:var(--tx-3)"># GitHub shows a banner → click "Compare & pull request"</span>
+
+<span style="color:var(--tx-3)"># 7 — After PR is merged, clean up</span>
+git checkout main
+git pull origin main
+git branch <span style="color:#79c0ff">-d</span> <span style="color:#a5d6ff">feature/your-feature-name</span></pre></div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:4px">Conventional commit prefixes</div>
+        <table class="tbl">
+          <thead><tr><th>Prefix</th><th>Use for</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>feat:</code></td><td>New feature</td><td><code>feat: add dark mode toggle</code></td></tr>
+            <tr><td><code>fix:</code></td><td>Bug fix</td><td><code>fix: broken login redirect</code></td></tr>
+            <tr><td><code>chore:</code></td><td>Config, deps, tooling</td><td><code>chore: update package.json</code></td></tr>
+            <tr><td><code>docs:</code></td><td>Documentation</td><td><code>docs: update README steps</code></td></tr>
+            <tr><td><code>refactor:</code></td><td>Restructure, no logic change</td><td><code>refactor: split auth into service</code></td></tr>
+            <tr><td><code>style:</code></td><td>CSS / formatting only</td><td><code>style: fix button padding</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="div">
+
+      <!-- S8 -->
+      <div class="section" id="s8">
+        <div class="sec-head"><div class="step-badge">8</div><h2>Daily workflow checklist</h2></div>
+        <p class="sec-desc">Run this at the start of every session to avoid committing with the wrong identity.</p>
+        <ul class="steps">
+          <li class="si"><div class="sn">1</div><div><div class="st">Verify remote URL</div><div class="sd">Run <code>git remote -v</code> — must show <code>github-personal</code> or <code>github-work</code>. Never bare <code>github.com</code>.</div></div></li>
+          <li class="si"><div class="sn">2</div><div><div class="st">Verify identity</div><div class="sd">Run <code>git config user.email</code> — must match the account the remote belongs to.</div></div></li>
+          <li class="si"><div class="sn">3</div><div><div class="st">Pull before branching</div><div class="sd">Always <code>git pull origin main</code> before creating a new branch to avoid conflicts.</div></div></li>
+          <li class="si"><div class="sn">4</div><div><div class="st">Branch for every task</div><div class="sd"><code>git checkout -b feature/task-name</code> — never code directly on main.</div></div></li>
+          <li class="si"><div class="sn">5</div><div><div class="st">Commit often, message well</div><div class="sd">Small focused commits are easy to review and revert. Use conventional prefixes from Step 7.</div></div></li>
+        </ul>
+        <div class="cs" style="margin-top:14px"><pre><span style="color:var(--tx-3)"># Paste this at the start of every session</span>
+git remote -v
+git config user.email
+git checkout main
+git pull origin main
+git checkout <span style="color:#79c0ff">-b</span> <span style="color:#a5d6ff">feature/todays-task</span></pre><button class="cp-btn" onclick="cp(this,'git remote -v\ngit config user.email\ngit checkout main\ngit pull origin main\ngit checkout -b feature/todays-task')">copy</button></div>
+      </div>
+
+      <hr class="div">
+
+      <!-- S9 -->
+      <div class="section" id="s9">
+        <div class="sec-head"><div class="step-badge red">!</div><h2>Common mistakes &amp; fixes</h2></div>
+        <div class="call cd"><span class="call-icon">✗</span><div><strong>Using github.com directly</strong><br><code>git@github.com:username/repo.git</code> — SSH picks a random key, commits go to the wrong account.<br><br><strong>Fix:</strong> Always use the alias:<br><code>git@github-personal:your-personal-username/repo.git</code></div></div>
+        <div class="call cd"><span class="call-icon">✗</span><div><strong>Forgot to set user.email</strong><br>Commits show the wrong author. Check with <code>git log --oneline -3</code>.<br><br><strong>Fix:</strong> <code>git config user.email "correct@email.com"</code> then amend the last commit:<br><code>git commit --amend --reset-author --no-edit</code></div></div>
+        <div class="call cd"><span class="call-icon">✗</span><div><strong>Wrong remote URL on existing repo</strong><br><br><strong>Fix personal:</strong> <code>git remote set-url origin git@github-personal:username/repo.git</code><br><strong>Fix work:</strong> <code>git remote set-url origin git@github-work:username/repo.git</code></div></div>
+        <div class="call cw"><span class="call-icon">⚠️</span><div><strong>Keys disappear after reboot</strong><br>SSH agent resets on restart. Add this to your <code>~/.zshrc</code> or <code>~/.bashrc</code>:<br><code>eval "$(ssh-agent -s)" &amp;&amp; ssh-add ~/.ssh/id_ed25519_personal &amp;&amp; ssh-add ~/.ssh/id_ed25519_work</code></div></div>
+      </div>
+
+    </div><!-- /tg -->
+
+    <!-- ══ CHEAT SHEET ══ -->
+    <div id="tc" style="display:none">
+      <div class="section">
+        <div class="sec-head"><h2>Quick reference</h2></div>
+        <table class="tbl">
+          <thead><tr><th>Action</th><th>Personal</th><th>Work</th></tr></thead>
+          <tbody>
+            <tr><td>Test SSH</td><td><code>ssh -T git@github-personal</code></td><td><code>ssh -T git@github-work</code></td></tr>
+            <tr><td>Clone</td><td><code>git clone git@github-personal:username/repo.git</code></td><td><code>git clone git@github-work:username/repo.git</code></td></tr>
+            <tr><td>Set email</td><td><code>git config user.email "personal@email.com"</code></td><td><code>git config user.email "you@company.com"</code></td></tr>
+            <tr><td>Add remote</td><td><code>git remote add origin git@github-personal:username/repo.git</code></td><td><code>git remote add origin git@github-work:username/repo.git</code></td></tr>
+            <tr><td>Fix remote</td><td><code>git remote set-url origin git@github-personal:username/repo.git</code></td><td><code>git remote set-url origin git@github-work:username/repo.git</code></td></tr>
+            <tr><td>Push branch</td><td colspan="2"><code>git push -u origin feature/branch-name</code></td></tr>
+            <tr><td>Verify</td><td colspan="2"><code>git remote -v</code> &nbsp; <code>git config user.email</code></td></tr>
+          </tbody>
+        </table>
+        <div class="sec-head" style="margin-top:22px"><h2>SSH config template</h2></div>
+        <div class="cs"><pre><span style="color:#3fb950">Host</span> <span style="color:#a5d6ff">github-personal</span>
+  <span style="color:#79c0ff">HostName</span>       github.com
+  <span style="color:#79c0ff">User</span>           git
+  <span style="color:#79c0ff">IdentityFile</span>   <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+  <span style="color:#79c0ff">IdentitiesOnly</span> yes
+
+<span style="color:#3fb950">Host</span> <span style="color:#a5d6ff">github-work</span>
+  <span style="color:#79c0ff">HostName</span>       github.com
+  <span style="color:#79c0ff">User</span>           git
+  <span style="color:#79c0ff">IdentityFile</span>   <span style="color:#ffa657">~/.ssh/id_ed25519_work</span>
+  <span style="color:#79c0ff">IdentitiesOnly</span> yes</pre><button class="cp-btn" onclick="cp(this,'Host github-personal\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519_personal\n  IdentitiesOnly yes\n\nHost github-work\n  HostName github.com\n  User git\n  IdentityFile ~/.ssh/id_ed25519_work\n  IdentitiesOnly yes')">copy</button></div>
+      </div>
+    </div>
+
+    <!-- ══ TROUBLESHOOT ══ -->
+    <div id="tt" style="display:none">
+      <div class="section">
+        <div class="sec-head"><h2>Troubleshooting</h2></div>
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">Permission denied (publickey)</div>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Verbose debug — shows which key SSH is trying</span>
+ssh <span style="color:#79c0ff">-vT</span> git@github-personal
+
+<span style="color:var(--tx-3)"># List keys currently loaded in agent</span>
+ssh-add -l
+
+<span style="color:var(--tx-3)"># Re-add keys if agent is empty</span>
+ssh-add <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+ssh-add <span style="color:#ffa657">~/.ssh/id_ed25519_work</span></pre><button class="cp-btn" onclick="cp(this,'ssh -vT git@github-personal\nssh-add -l\nssh-add ~/.ssh/id_ed25519_personal\nssh-add ~/.ssh/id_ed25519_work')">copy</button></div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:16px">Inspect current repo config</div>
+        <div class="cs"><pre>git config --list --local   <span style="color:var(--tx-3)"># all local settings</span>
+git remote -v               <span style="color:var(--tx-3)"># remote URL</span>
+git config user.name
+git config user.email
+git log --oneline -5        <span style="color:var(--tx-3)"># recent commits with authors</span></pre><button class="cp-btn" onclick="cp(this,'git config --list --local\ngit remote -v\ngit config user.name\ngit config user.email\ngit log --oneline -5')">copy</button></div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:16px">Fix wrong author on last commit</div>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Amend before pushing</span>
+git commit <span style="color:#79c0ff">--amend --reset-author --no-edit</span>
+
+<span style="color:var(--tx-3)"># Already pushed? Force push (use carefully on feature branches only)</span>
+git push <span style="color:#79c0ff">--force-with-lease</span> origin &lt;branch-name&gt;</pre><button class="cp-btn" onclick="cp(this,'git commit --amend --reset-author --no-edit')">copy</button></div>
+
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px;margin-top:16px">Fix SSH file permissions</div>
+        <div class="cs"><pre><span style="color:var(--tx-3)"># Permissions must be exactly this or SSH won't work</span>
+chmod 700 <span style="color:#ffa657">~/.ssh</span>
+chmod 600 <span style="color:#ffa657">~/.ssh/id_ed25519_personal</span>
+chmod 600 <span style="color:#ffa657">~/.ssh/id_ed25519_work</span>
+chmod 600 <span style="color:#ffa657">~/.ssh/config</span>
+ls -la <span style="color:#ffa657">~/.ssh/</span>   <span style="color:var(--tx-3)"># verify</span></pre><button class="cp-btn" onclick="cp(this,'chmod 700 ~/.ssh\nchmod 600 ~/.ssh/id_ed25519_personal\nchmod 600 ~/.ssh/id_ed25519_work\nchmod 600 ~/.ssh/config\nls -la ~/.ssh/')">copy</button></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const accs = {
+  personal: { name:'your-personal-username', email:'personal@email.com',   bg:'#122236', color:'#58a6ff', init:'YO' },
+  work:     { name:'your-work-username',     email:'you@company.com',       bg:'#122112', color:'#3fb950', init:'YO' }
+};
+function setAcc(t) {
+  const a = accs[t];
+  document.getElementById('t-name').textContent  = a.name;
+  document.getElementById('t-email').textContent = a.email;
+  const av = document.getElementById('t-av');
+  av.style.background = a.bg; av.style.color = a.color;
+  document.getElementById('btn-p').className = 't-btn' + (t==='personal' ? ' act-p' : '');
+  document.getElementById('btn-w').className = 't-btn' + (t==='work'     ? ' act-o' : '');
+  t === 'work' ? document.body.classList.add('show-o') : document.body.classList.remove('show-o');
+}
+function switchTab(el, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['tg','tc','tt'].forEach(i => document.getElementById(i).style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+function goTo(id, el) {
+  document.getElementById(id)?.scrollIntoView({ behavior:'smooth', block:'start' });
+  document.querySelectorAll('.sb-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+function cp(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ copied'; btn.classList.add('done');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('done'); }, 1600);
+  });
+}
+</script>
+</body>
+</html>
