@@ -1,4 +1,4 @@
-# 🔐 Git Multi-Account Setup
+# Git Multi-Account Setup
 
 > Manage multiple GitHub accounts on a single machine using SSH key pairs and host aliases — no credential conflicts, no accidental cross-account commits.
 
