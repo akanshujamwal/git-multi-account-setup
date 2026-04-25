@@ -11,7 +11,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#-overview)
 - [Account Setup](#-account-setup)
@@ -29,7 +29,7 @@
 
 ---
 
-## 🧭 Overview
+## Overview
 
 When two GitHub accounts share one machine, SSH sends the **wrong key** by default — causing authentication failures or commits attributed to the wrong account.
 
@@ -43,7 +43,7 @@ This guide uses **Personal** and **Work** as the two account types. The exact sa
 
 ---
 
-## 👤 Account Setup
+## Account Setup
 
 Replace the placeholders below with your own values before running any commands.
 
@@ -257,7 +257,7 @@ git branch -d feature/your-feature-name
 
 ---
 
-## ✅ Daily Workflow Checklist
+## Daily Workflow Checklist
 
 Run this block at the start of every session:
 
@@ -271,7 +271,7 @@ git checkout -b feature/todays-task
 
 ---
 
-## ⚠️ Common Mistakes & Fixes
+## Common Mistakes & Fixes
 
 ### ❌ Using `github.com` directly
 
@@ -318,7 +318,7 @@ ssh-add ~/.ssh/id_ed25519_work
 
 ---
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Debug an SSH connection
 
@@ -358,7 +358,7 @@ git log --oneline -5        # recent commits with author info
 
 ---
 
-## 🌐 Live Guide
+## Live Guide
 
 An interactive HTML version of this guide (with a Personal / Work toggle and copy buttons on every command) is included in this repo as `index.html`.
 
@@ -366,7 +366,7 @@ Open it in any browser — it works fully offline.
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Found a mistake or want to add a tip? PRs are welcome.
 
@@ -377,7 +377,7 @@ Found a mistake or want to add a tip? PRs are welcome.
 
 ---
 
-## 📄 License
+## License
 
 MIT — free to use, share, and adapt with attribution.
 
